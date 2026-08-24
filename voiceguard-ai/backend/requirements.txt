@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+websockets
+python-multipart
+librosa
+numpy
+scipy
+pytest
+httpx2
