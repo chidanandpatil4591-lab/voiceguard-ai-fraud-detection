@@ -1,9 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
 websockets
 python-multipart
-librosa
+soundfile
 numpy
 scipy
+httpx
 pytest
-httpx2
+pytest-asyncio
+python-dotenv
