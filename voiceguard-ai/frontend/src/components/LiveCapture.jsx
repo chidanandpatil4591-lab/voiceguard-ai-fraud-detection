@@ -171,6 +171,9 @@ export default function LiveCapture({ onLiveResult, onFile, onError, disabled = 
           <><Mic size={16} /> Start live capture</>
         )}
       </button>
+      {!recording && !liveStatus && (
+        <span className="capture-hint">Speak clearly for 3–5 seconds</span>
+      )}
       {liveStatus && <span className="live-status-chip">{liveStatus}</span>}
     </div>
   )

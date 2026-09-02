@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).parents[1] / "backend"))
 
 from audio_processor import extract_features
+from detector import EvidenceBasedDetector
 from main import app
 from risk_engine import calculate_contextual_risk, risk_level_for
 
@@ -100,7 +101,7 @@ def test_audio_analysis_returns_features_and_cleans_upload() -> None:
     )
     assert response.status_code == 200
     payload = response.json()
-    assert payload["detection_mode"] == "evidence-v3"
+    assert payload["detection_mode"] == "trained-demo-v1"
     # Duration should be approximately what we synthesised (padded internally)
     assert payload["features"]["duration_seconds"] >= 0.25
     # Minimum feature count — should have ≥ 45 features with the new additions
@@ -213,6 +214,61 @@ def test_new_feature_values_are_finite() -> None:
     ):
         assert key in features
         assert np.isfinite(features[key]), f"{key} is not finite"
+
+
+def test_detector_does_not_classify_non_speech_as_synthetic() -> None:
+    result = EvidenceBasedDetector().detect(
+        {
+            "pitch_voiced_ratio": 0.0,
+            "spectral_flux_mean": 0.0,
+            "spectral_centroid_mean": 1000.0,
+            "mfcc_delta_std": 0.0,
+            "rms_modulation": 0.0,
+            "sub_band_ratio_high": 0.0,
+            "spectral_flatness": 0.0,
+            "silence_ratio": 1.0,
+        }
+    )
+
+    assert result.synthetic_probability == 50.0
+    assert result.human_probability == 50.0
+    assert result.acoustic_anomaly_score == 0.0
+
+
+def test_detector_preserves_clustered_synthetic_evidence() -> None:
+    result = EvidenceBasedDetector().detect(
+        {
+            "pitch_voiced_ratio": 0.8,
+            "jitter": 0.003,
+            "shimmer": 0.012,
+            "harmonic_to_noise_ratio": 29.0,
+            "f0_range": 55.0,
+            "spectral_flux_mean": 120.0,
+            "spectral_centroid_mean": 1400.0,
+            "mfcc_delta_std": 1.2,
+            "rms_modulation": 0.14,
+            "sub_band_ratio_high": 0.2,
+            "spectral_flatness": 0.25,
+            "silence_ratio": 0.1,
+        }
+    )
+
+    assert result.synthetic_probability >= 73.1
+    assert result.detection_details["synthetic_marker_count"] >= 3
+
+
+@pytest.mark.parametrize(
+    ("case_name", "minimum_ai", "maximum_ai"),
+    [("human", 0, 20), ("synthetic", 80, 100), ("no-speech", 40, 60)],
+)
+def test_demo_cases_have_stable_presentation_verdicts(
+    case_name: str, minimum_ai: float, maximum_ai: float
+) -> None:
+    response = client.get(f"/api/demo/{case_name}")
+
+    assert response.status_code == 200
+    probability = response.json()["synthetic_probability"]
+    assert minimum_ai <= probability <= maximum_ai
 
 
 # ---------------------------------------------------------------------------

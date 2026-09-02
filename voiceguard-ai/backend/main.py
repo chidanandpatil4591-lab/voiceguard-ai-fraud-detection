@@ -147,6 +147,73 @@ def dashboard_stats() -> DashboardStats:
 # Audio analysis
 # ---------------------------------------------------------------------------
 
+DEMO_FEATURES: dict[str, dict[str, float]] = {
+    "human": {
+        "pitch_voiced_ratio": 0.82, "jitter": 0.009, "shimmer": 0.038,
+        "harmonic_to_noise_ratio": 18.0, "f0_range": 165.0,
+        "spectral_flux_mean": 620.0, "spectral_centroid_mean": 1450.0,
+        "mfcc_delta_std": 5.8, "rms_modulation": 0.42,
+        "sub_band_ratio_high": 0.10, "spectral_flatness": 0.12,
+        "silence_ratio": 0.08,
+    },
+    "synthetic": {
+        "pitch_voiced_ratio": 0.86, "jitter": 0.001, "shimmer": 0.005,
+        "harmonic_to_noise_ratio": 35.0, "f0_range": 18.0,
+        "spectral_flux_mean": 25.0, "spectral_centroid_mean": 1450.0,
+        "mfcc_delta_std": 0.3, "rms_modulation": 0.05,
+        "sub_band_ratio_high": 0.32, "spectral_flatness": 0.50,
+        "silence_ratio": 0.08,
+    },
+    "no-speech": {
+        "pitch_voiced_ratio": 0.0, "spectral_flux_mean": 0.0,
+        "spectral_centroid_mean": 0.0, "mfcc_delta_std": 0.0,
+        "rms_modulation": 0.0, "sub_band_ratio_high": 0.0,
+        "spectral_flatness": 0.0, "silence_ratio": 1.0,
+    },
+}
+
+
+@app.get("/api/demo/{case_name}")
+def demo_analysis(case_name: str) -> dict:
+    """Return a repeatable labelled fixture for presentations and QA."""
+    features = DEMO_FEATURES.get(case_name)
+    if features is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unknown demo case. Use human, synthetic, or no-speech.",
+        )
+
+    detection = detector.detect(features)
+    voice_risk = calculate_voice_risk(
+        detection.synthetic_probability,
+        detection.acoustic_anomaly_score,
+    )
+    labels = {
+        "human": "Demo human voice",
+        "synthetic": "Demo AI-generated voice",
+        "no-speech": "Demo silence / no speech",
+    }
+    return {
+        "status": "demo",
+        "message": "Repeatable presentation fixture; no audio was uploaded.",
+        "analysis_id": f"demo-{case_name}",
+        "filename": labels[case_name],
+        "duration_seconds": 4.0,
+        "sample_rate": 16_000,
+        "features": features,
+        "human_probability": detection.human_probability,
+        "synthetic_probability": detection.synthetic_probability,
+        "confidence": detection.confidence,
+        "acoustic_anomaly_score": detection.acoustic_anomaly_score,
+        "indicators": detection.indicators,
+        "detection_details": detection.detection_details,
+        "risk_score": voice_risk.risk_score,
+        "risk_level": voice_risk.risk_level,
+        "recommended_action": voice_risk.recommended_action,
+        "detection_mode": detection.detection_mode,
+        "alert_events": [],
+    }
+
 @app.post("/api/analyze")
 async def analyze_audio(file: UploadFile = File(...)) -> dict:
     """Analyse an uploaded audio file for voice cloning / synthetic speech."""

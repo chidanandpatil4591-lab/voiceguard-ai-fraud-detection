@@ -24,6 +24,13 @@ export default function VoiceAssessment({
   const fmt = (v) =>
     Number.isFinite(Number(v)) ? Number(v).toFixed(1) : '0.0'
 
+  function verdictFor(assessment) {
+    if (!assessment) return 'PENDING'
+    if (assessment.synthetic_probability >= 60) return 'AI-GENERATED'
+    if (assessment.human_probability >= 70) return 'HUMAN-LIKELY'
+    return 'UNVERIFIED'
+  }
+
   return (
     <section className="panel result-panel">
       <div className="panel-heading">
@@ -32,6 +39,11 @@ export default function VoiceAssessment({
           <h2>Signal verdict</h2>
           {liveStatus && isLive && (
             <small className="live-status">{liveStatus}</small>
+          )}
+          {display && (
+            <strong className={`verdict-label ${verdictFor(display).toLowerCase()}`}>
+              {verdictFor(display)}
+            </strong>
           )}
         </div>
         {display && <RiskBadge level={display.risk_level} />}

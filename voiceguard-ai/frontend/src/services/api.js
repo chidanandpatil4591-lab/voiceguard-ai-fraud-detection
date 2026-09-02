@@ -51,6 +51,10 @@ export function analyzeAudio(file) {
   return request('/analyze', { method: 'POST', body: formData })
 }
 
+export function fetchDemoCase(caseName) {
+  return request(`/demo/${encodeURIComponent(caseName)}`)
+}
+
 export function analyzeContext(payload) {
   return request('/analyze/context', {
     method: 'POST',

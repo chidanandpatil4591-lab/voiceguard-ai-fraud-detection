@@ -5,7 +5,12 @@
       "label": "VoiceGuard: Start Backend",
       "type": "shell",
       "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-      "args": ["-m", "uvicorn", "main:app", "--reload"],
+      "args": [
+        "-m",
+        "uvicorn",
+        "main:app",
+        "--reload"
+      ],
       "options": {
         "cwd": "${workspaceFolder}\\backend"
       },
@@ -16,12 +21,56 @@
       "label": "VoiceGuard: Start Frontend",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "dev"],
+      "args": [
+        "run",
+        "dev"
+      ],
       "options": {
         "cwd": "${workspaceFolder}\\frontend"
       },
       "isBackground": true,
       "problemMatcher": []
+    },
+    {
+      "type": "docker-build",
+      "label": "docker-build",
+      "platform": "node",
+      "dockerBuild": {
+        "dockerfile": "${workspaceFolder}/frontend/Dockerfile",
+        "context": "${workspaceFolder}/frontend",
+        "pull": true
+      },
+      "node": {
+        "package": "${workspaceFolder}/frontend/package.json"
+      }
+    },
+    {
+      "type": "docker-run",
+      "label": "docker-run: release",
+      "dependsOn": [
+        "docker-build"
+      ],
+      "platform": "node",
+      "node": {
+        "package": "${workspaceFolder}/frontend/package.json"
+      }
+    },
+    {
+      "type": "docker-run",
+      "label": "docker-run: debug",
+      "dependsOn": [
+        "docker-build"
+      ],
+      "dockerRun": {
+        "env": {
+          "DEBUG": "*",
+          "NODE_ENV": "development"
+        }
+      },
+      "node": {
+        "package": "${workspaceFolder}/frontend/package.json",
+        "enableDebugging": true
+      }
     }
   ]
 }

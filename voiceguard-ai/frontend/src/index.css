@@ -156,6 +156,34 @@ footer,
 }
 .alert-dismiss:hover { color: #edf7f2; }
 
+/* ── Presentation fixtures ── */
+.demo-cases {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid #577143;
+  background: rgba(216,255,104,.06);
+  padding: 17px 20px;
+  margin-bottom: 20px;
+}
+.demo-cases h2 { margin: 0; font-size: 17px; font-weight: 500; }
+.demo-cases p:not(.eyebrow) { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+.demo-case-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.demo-case-buttons button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #658447;
+  background: transparent;
+  color: var(--lime);
+  padding: 10px 12px;
+  font: 10px var(--mono);
+  text-transform: uppercase;
+}
+.demo-case-buttons button:hover { background: rgba(216,255,104,.12); }
+.demo-case-buttons button:disabled { opacity: .55; cursor: wait; }
+
 /* ── Error banner ── */
 .error-banner {
   display: flex;
@@ -182,6 +210,10 @@ footer,
 .panel-heading h2 { font-size: 21px; margin: 0; font-weight: 500; }
 .panel-icon { color: var(--mint); opacity: .7; }
 .panel-description { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.verdict-label { display: block; margin-top: 8px; font: 11px var(--mono); letter-spacing: 1.2px; color: var(--muted); }
+.verdict-label.ai-generated { color: var(--red); }
+.verdict-label.human-likely { color: var(--mint); }
+.verdict-label.unverified { color: var(--orange); }
 
 /* ── Drop zone ── */
 .dropzone {
@@ -209,6 +241,7 @@ footer,
 .live-capture { margin-top: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .live-status-chip { font: 10px var(--mono); color: var(--lime); border: 1px solid #577143; padding: 5px 8px; }
 .live-status { font: 10px var(--mono); color: var(--lime); display: block; margin-top: 6px; }
+.capture-hint { font: 10px var(--mono); color: var(--muted); }
 
 /* ── Buttons ── */
 .primary-button {

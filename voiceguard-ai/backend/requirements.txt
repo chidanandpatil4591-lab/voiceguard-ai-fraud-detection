@@ -9,3 +9,5 @@ httpx
 pytest
 pytest-asyncio
 python-dotenv
+scikit-learn
+joblib
