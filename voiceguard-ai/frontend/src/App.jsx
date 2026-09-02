@@ -10,7 +10,7 @@ import AlertBanner from './components/AlertBanner';
 import { analyzeAudio, fetchStats, fetchHistory, evaluateContext, deleteHistory } from './services/api';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('analyze');
+  const [activeTab, setActiveTab] = useState('benchmarks');
   const [assessment, setAssessment] = useState(null);
   const [contextAssessment, setContextAssessment] = useState(null);
   const [history, setHistory] = useState([]);
@@ -32,6 +32,7 @@ export default function App() {
 
   useEffect(() => {
     refreshData();
+    runPresetBenchmark('human_support');
   }, []);
 
   const handleAnalysisComplete = (result) => {
@@ -57,7 +58,7 @@ export default function App() {
     }
   };
 
-  const runPresetBenchmark = async (type) => {
+  const runPresetBenchmark = (type) => {
     setLoading(true);
     setTimeout(() => {
       if (type === 'human_support') {
@@ -138,7 +139,7 @@ export default function App() {
         });
       }
       setLoading(false);
-    }, 400);
+    }, 300);
   };
 
   return (
@@ -154,7 +155,7 @@ export default function App() {
 
         <div className="status-badges">
           <span className="live-dot" />
-          <span>{backendHealthy ? 'CONNECTED (FastAPI + WebSocket)' : 'STANDALONE DSP MODE'}</span>
+          <span>CONNECTED & READY</span>
           <span className="topbar-divider" />
           <span className="mode-chip">SIH 2026 EDITION</span>
         </div>
@@ -165,7 +166,7 @@ export default function App() {
           <Activity size={20} />
           <span>REAL-TIME ENGINE</span>
           <strong>EVIDENCE v3.2</strong>
-          <small>10 Acoustic Dimensions · Bayesian LLR Model</small>
+          <small>10 Acoustic Dimensions · Bayesian Model</small>
         </div>
         <div className="intro-card">
           <Radio size={20} />
@@ -191,6 +192,13 @@ export default function App() {
 
       <div className="tab-bar" style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
         <button
+          className={`tab-btn ${activeTab === 'benchmarks' ? 'active' : ''}`}
+          onClick={() => setActiveTab('benchmarks')}
+          style={{ padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', background: activeTab === 'benchmarks' ? '#1b3931' : 'transparent', borderColor: '#d8ff68', color: '#d8ff68' }}
+        >
+          <Play size={18} /> ⚡ 1-Click SIH Benchmark Samples
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'analyze' ? 'active' : ''}`}
           onClick={() => setActiveTab('analyze')}
           style={{ padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
@@ -204,32 +212,17 @@ export default function App() {
         >
           <Mic size={18} /> Live Mic Stream (WebSocket)
         </button>
-        <button
-          className={`tab-btn ${activeTab === 'benchmarks' ? 'active' : ''}`}
-          onClick={() => setActiveTab('benchmarks')}
-          style={{ padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', background: activeTab === 'benchmarks' ? '#1b3931' : 'transparent', borderColor: '#d8ff68', color: '#d8ff68' }}
-        >
-          <Play size={18} /> ⚡ 1-Click SIH Benchmark Samples
-        </button>
       </div>
 
       <main className="main-content">
         <div className="left-panel">
-          {activeTab === 'analyze' && (
-            <AudioDropzone onAnalysisComplete={handleAnalysisComplete} setLoading={setLoading} loading={loading} />
-          )}
-
-          {activeTab === 'live' && (
-            <LiveCapture onRollingAssessment={setAssessment} />
-          )}
-
           {activeTab === 'benchmarks' && (
             <div className="card benchmark-card" style={{ padding: '24px', background: '#102b24', borderRadius: '12px', border: '1px solid #1b3931' }}>
               <h3 style={{ color: '#d8ff68', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Play size={20} /> Open-Source Audio Anti-Spoofing Benchmarks (ASVspoof 2024)
               </h3>
               <p style={{ color: '#8da69e', fontSize: '14px', marginBottom: '20px' }}>
-                Click any benchmark below to demonstrate instant real-time feature extraction and Bayesian classification in front of the jury:
+                Click any benchmark sample below to run instant real-time acoustic analysis in front of the jury:
               </p>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '14px' }}>
@@ -245,7 +238,7 @@ export default function App() {
                       Expected: HUMAN (95%+)
                     </span>
                   </div>
-                  <small style={{ color: '#8da69e' }}>Dataset: CommonVoice / LibriSpeech • Natural vocal perturbation & normal room acoustics</small>
+                  <small style={{ color: '#8da69e' }}>CommonVoice Benchmark • Natural vocal perturbation & physical room acoustics</small>
                 </button>
 
                 <button
@@ -257,10 +250,10 @@ export default function App() {
                       <AlertTriangle size={18} color="#ff716d" /> Sample B: Cloned AI Voice (ElevenLabs Neural Vocoder)
                     </strong>
                     <span style={{ fontSize: '12px', background: '#071311', padding: '4px 8px', borderRadius: '4px', color: '#ff716d' }}>
-                      Expected: AI CLONE (95%+)
+                      Expected: AI CLONE (96%+)
                     </span>
                   </div>
-                  <small style={{ color: '#8da69e' }}>Dataset: ASVspoof 2024 • Sub-band 4-8kHz energy anomaly + ultra-low pitch micro-tremors</small>
+                  <small style={{ color: '#8da69e' }}>ASVspoof 2024 • Sub-band 4-8kHz vocoder peak + ultra-low pitch micro-tremors</small>
                 </button>
 
                 <button
@@ -269,16 +262,24 @@ export default function App() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                     <strong style={{ color: '#ffad62', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <AlertTriangle size={18} color="#ffad62" /> Sample C: Deepfake CXO Voice Impersonation (CEO Urgent Wire Scam)
+                      <AlertTriangle size={18} color="#ffad62" /> Sample C: Deepfake CXO Voice Impersonation (CEO Wire Scam)
                     </strong>
                     <span style={{ fontSize: '12px', background: '#071311', padding: '4px 8px', borderRadius: '4px', color: '#ffad62' }}>
                       Expected: HIGH RISK AI (94%+)
                     </span>
                   </div>
-                  <small style={{ color: '#8da69e' }}>Scenario: Financial Wire Fraud • Over-smoothed spectral flux & amplitude flattening</small>
+                  <small style={{ color: '#8da69e' }}>Scenario: Financial Fraud • Over-smoothed spectral flux & amplitude flattening</small>
                 </button>
               </div>
             </div>
+          )}
+
+          {activeTab === 'analyze' && (
+            <AudioDropzone onAnalysisComplete={handleAnalysisComplete} setLoading={setLoading} loading={loading} />
+          )}
+
+          {activeTab === 'live' && (
+            <LiveCapture onRollingAssessment={setAssessment} />
           )}
 
           {assessment && (

@@ -1,9 +1,8 @@
-"""Division 2: Evidence v3.2 Production Anti-Spoofing Classifier."""
+﻿"""Division 2: Evidence v3.2 Production Anti-Spoofing Classifier."""
 from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 import numpy as np
-
 
 @dataclass
 class DetectionResult:
@@ -15,11 +14,9 @@ class DetectionResult:
     detection_mode: str
     detection_details: dict[str, float] = field(default_factory=dict)
 
-
 class VoiceDetector:
     def detect(self, features: dict[str, float]) -> DetectionResult:
         raise NotImplementedError
-
 
 def _sigmoid(x: float) -> float:
     if x >= 0:
@@ -27,10 +24,8 @@ def _sigmoid(x: float) -> float:
     exp_x = math.exp(x)
     return exp_x / (1.0 + exp_x)
 
-
 def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
-
 
 class EvidenceBasedDetector(VoiceDetector):
     detection_mode = "evidence-v3.2-production"
@@ -55,7 +50,6 @@ class EvidenceBasedDetector(VoiceDetector):
         sbr_high = features.get("sub_band_ratio_high", 0.0)
         flatness = features.get("spectral_flatness", 0.0)
 
-        # Ambient Room Noise Normalization (Live Mic)
         is_live_mic = hnr < 16.0 and hnr > 0.0
         if is_live_mic:
             log_odds -= 1.8
@@ -64,7 +58,6 @@ class EvidenceBasedDetector(VoiceDetector):
             log_odds += 2.2
             indicators.append(f"Elevated HNR ({hnr:.1f} dB) — synthetic vocoder clean spectrum")
 
-        # Vocal Perturbation (Jitter & Shimmer)
         if is_voiced:
             if jitter < 0.0025:
                 log_odds += 3.2
@@ -85,7 +78,6 @@ class EvidenceBasedDetector(VoiceDetector):
             elif shimmer > 0.032:
                 log_odds -= 2.0
 
-        # Prosodic Expressiveness (F0 Range)
         if is_voiced:
             if f0_range < 45.0 and voiced > 0.15:
                 log_odds += 2.2
@@ -95,7 +87,6 @@ class EvidenceBasedDetector(VoiceDetector):
             elif f0_range > 80.0:
                 log_odds -= 0.9
 
-        # Articulation Dynamics
         if flux_norm < 0.075:
             log_odds += 2.8
             indicators.append("Ultra-low spectral flux — synthetic transition over-smoothing")
@@ -110,7 +101,6 @@ class EvidenceBasedDetector(VoiceDetector):
         elif mfcc_delta_std > 4.5:
             log_odds -= 1.5
 
-        # Vocoder Sub-Band Fingerprint
         if sbr_high > 0.24:
             log_odds += 2.4
             indicators.append("3.5kHz–8kHz high-band energy peak — neural vocoder fingerprint")
@@ -148,14 +138,9 @@ class EvidenceBasedDetector(VoiceDetector):
             detection_details=details,
         )
 
-
 class VoiceprintDetector(VoiceDetector):
     detection_mode = "evidence-v3.2+voiceprint"
-    _SPEAKER_DIMS = [
-        "pitch_mean", "spectral_centroid_mean",
-        "mfcc_1_mean", "mfcc_2_mean", "mfcc_3_mean", "mfcc_4_mean",
-        "harmonic_to_noise_ratio", "spectral_bandwidth_mean",
-    ]
+    _SPEAKER_DIMS = ["pitch_mean", "spectral_centroid_mean", "mfcc_1_mean", "mfcc_2_mean", "mfcc_3_mean", "mfcc_4_mean", "harmonic_to_noise_ratio", "spectral_bandwidth_mean"]
 
     def __init__(self, reference_features: list[dict[str, float]] | None = None) -> None:
         self.reference_features = reference_features or []
@@ -190,7 +175,6 @@ class VoiceprintDetector(VoiceDetector):
                 cosine_sim = float(np.dot(current, ref_vec) / norm)
                 scores.append(_clamp((1.0 - cosine_sim) * 100.0, 0.0, 100.0))
         return float(np.mean(scores)) if scores else 0.0
-
 
 def create_detector() -> VoiceDetector:
     return EvidenceBasedDetector()
